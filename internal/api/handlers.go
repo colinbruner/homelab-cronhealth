@@ -379,8 +379,10 @@ func (h *Handlers) Ready(c *gin.Context) {
 
 func getUserID(c *gin.Context) *uuid.UUID {
 	if idStr, exists := c.Get("user_id"); exists {
-		if id, ok := idStr.(uuid.UUID); ok {
-			return &id
+		if s, ok := idStr.(string); ok {
+			if id, err := uuid.Parse(s); err == nil {
+				return &id
+			}
 		}
 	}
 	return nil
