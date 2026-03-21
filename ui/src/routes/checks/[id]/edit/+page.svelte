@@ -15,7 +15,7 @@
   let loading = $state(true);
   let error = $state('');
 
-  const checkId = $derived($page.params.id);
+  const checkId = $derived($page.params.id!);
 
   onMount(async () => {
     try {

@@ -21,7 +21,6 @@
 <a
   href="/checks/{check.id}"
   class="block bg-surface border border-border {borderColors[check.status]} border-l-2 rounded-card p-4 hover:bg-border/30 transition-colors"
-  role="article"
   aria-label="{check.name}, status {check.status}"
 >
   <div class="flex items-center justify-between mb-2">

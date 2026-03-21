@@ -20,7 +20,7 @@
   let showDeleteModal = $state(false);
   let actionLoading = $state(false);
 
-  const checkId = $derived($page.params.id);
+  const checkId = $derived($page.params.id!);
   const pingUrl = $derived(
     check ? `${window.location.origin}/ping/${check.slug}` : ''
   );

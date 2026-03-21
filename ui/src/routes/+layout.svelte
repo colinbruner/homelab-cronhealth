@@ -32,7 +32,7 @@
   </div>
 {:else}
   <Nav />
-  <main class="pb-16 md:pb-0" role="main">
+  <main class="pb-16 md:pb-0">
     {@render children()}
   </main>
   <ToastContainer />
