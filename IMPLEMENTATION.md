@@ -101,6 +101,14 @@ Packaged as a Helm chart for ArgoCD deployment. All Kubernetes resources are tem
 
 ---
 
+### CI Pipeline (1 file)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `.github/workflows/ci.yaml` | GitHub Actions CI: 4 jobs — **Go** (vet, build api+poller, `go test ./...`), **UI** (`npm ci`, `svelte-check`, `npm run build`), **Docker** (build all 3 images via multi-stage targets, runs after Go+UI pass), **Helm** (lint `charts/cronhealth`). Triggers on push/PR to `master` | Done |
+
+---
+
 ## Not Started
 
 ### Other
@@ -109,4 +117,3 @@ Packaged as a Helm chart for ArgoCD deployment. All Kubernetes resources are tem
 |------|-------------|
 | Go tests | Integration tests against local Supabase (poller state machine, ping endpoint, auth) |
 | Svelte tests | Component tests with vitest + @testing-library/svelte |
-| CI pipeline | GitHub Actions: supabase start → go test → vitest |
