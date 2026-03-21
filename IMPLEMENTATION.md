@@ -1,6 +1,6 @@
 # cronhealth — Implementation Log
 
-Last updated: 2026-03-20
+Last updated: 2026-03-21
 
 ---
 
@@ -67,33 +67,60 @@ Last updated: 2026-03-20
 
 ---
 
-## Not Started
+### Dockerfiles (2 files)
 
-### Kubernetes Manifests (`k8s/`)
+| File | Description | Status |
+|------|-------------|--------|
+| `Dockerfile` | Multi-stage Go build. Builder stage compiles `cronhealth-api` + `cronhealth-poller` binaries. Two named targets (`api`, `poller`) from `scratch` with CA certs only | Done |
+| `ui/Dockerfile` | Multi-stage: `node:22-alpine` build → `nginx:1.27-alpine` serving static SvelteKit build | Done |
+| `ui/nginx.conf` | nginx config: serves static SPA with `try_files` fallback, proxies `/api/*`, `/auth/*`, `/ping/*`, `/health`, `/ready` to `cronhealth-api:8080`. SSE support with buffering disabled and 24h read timeout | Done |
 
-| Component | Description |
-|-----------|-------------|
-| `k8s/api/deployment.yaml` | cronhealth-api Deployment (Go + Gin, port 8080, 1 replica) |
-| `k8s/api/service.yaml` | ClusterIP service, port 8080 |
-| `k8s/poller/deployment.yaml` | cronhealth-poller Deployment (Go ticker, 1 replica) |
-| `k8s/ui/deployment.yaml` | cronhealth-ui Deployment (nginx + SvelteKit build, port 80, 1 replica) |
-| `k8s/ui/service.yaml` | ClusterIP service, port 80 |
-| `k8s/ingress.yaml` | Ingress routing: /api/*, /auth/*, /ping/* → api; /* → ui |
-| `k8s/secrets.yaml` | Secret template: DATABASE_URL, OIDC_CLIENT_SECRET, SESSION_SECRET, AWS creds |
+### Helm Chart (`charts/cronhealth/`)
 
-### Dockerfiles
+Packaged as a Helm chart for ArgoCD deployment. All Kubernetes resources are templated with standard labels, configurable via `values.yaml`.
 
-| File | Description |
-|------|-------------|
-| `Dockerfile` | Multi-stage Go build for cronhealth-api + cronhealth-poller binaries (scratch base) |
-| `ui/Dockerfile` | Multi-stage: node build → nginx serving static files |
-| `ui/nginx.conf` | nginx config: serve static, proxy /api/* and /auth/* to cronhealth-api |
+| File | Description | Status |
+|------|-------------|--------|
+| `charts/cronhealth/Chart.yaml` | Helm chart metadata: name `cronhealth`, appVersion `1.0.0` | Done |
+| `charts/cronhealth/values.yaml` | All configurable values: image repos/tags, replica counts, resource limits, ingress (Traefik, `cronhealth.internal`), config (env vars), secrets (supports `existingSecret` for external secret management) | Done |
+| `charts/cronhealth/templates/_helpers.tpl` | Shared template helpers: common labels, secret name resolution | Done |
+| `charts/cronhealth/templates/configmap.yaml` | ConfigMap for non-secret env vars: `PORT`, `POLL_INTERVAL_SECONDS`, `ALERT_COOLDOWN_MINUTES`, `AWS_REGION` | Done |
+| `charts/cronhealth/templates/secret.yaml` | Secret (conditionally created if `existingSecret` not set): `DATABASE_URL`, OIDC creds, `SESSION_SECRET`, AWS creds. Designed for override via sealed-secrets or ArgoCD secret plugin | Done |
+| `charts/cronhealth/templates/api-deployment.yaml` | API Deployment: 1 replica, port 8080, liveness (`/health`) and readiness (`/ready`) probes, envFrom configmap + secret | Done |
+| `charts/cronhealth/templates/api-service.yaml` | API ClusterIP Service, port 8080 | Done |
+| `charts/cronhealth/templates/poller-deployment.yaml` | Poller Deployment: 1 replica, Recreate strategy (prevents duplicate alert processing), envFrom configmap + secret, no ports (background worker) | Done |
+| `charts/cronhealth/templates/ui-deployment.yaml` | UI Deployment: 1 replica, port 80, liveness/readiness probes on `/` | Done |
+| `charts/cronhealth/templates/ui-service.yaml` | UI ClusterIP Service, port 80 | Done |
+| `charts/cronhealth/templates/ingress.yaml` | Ingress (conditional): routes `/api`, `/auth`, `/ping`, `/health`, `/ready` → api service; `/` → ui service. Supports `ingressClassName`, TLS, annotations | Done |
 
 ### Other
 
-| Item | Description |
-|------|-------------|
-| `.gitignore` | Go binaries, node_modules, build artifacts, .env files |
-| Go tests | Integration tests against local Supabase (poller state machine, ping endpoint, auth) |
-| Svelte tests | Component tests with vitest + @testing-library/svelte |
-| CI pipeline | GitHub Actions: supabase start → go test → vitest |
+| File | Description | Status |
+|------|-------------|--------|
+| `.gitignore` | Go binaries, node_modules, build artifacts, .env files, IDE files | Done |
+
+---
+
+### CI Pipeline (1 file)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `.github/workflows/ci.yaml` | GitHub Actions CI: 4 jobs — **Go** (vet, build api+poller, `go test ./...`), **UI** (`npm ci`, `svelte-check`, `npm run build`), **Docker** (build all 3 images via multi-stage targets, runs after Go+UI pass), **Helm** (lint `charts/cronhealth`). Triggers on push/PR to `master` | Done |
+
+---
+
+### Go Tests (3 files, 19 tests)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `internal/config/config_test.go` | 8 tests: env var loading, defaults (port, region, poll interval, cooldown), custom values, OIDC fields, ALLOWED_OIDC_EMAILS parsing (comma-separated, trimming), DATABASE_URL required validation, invalid int env vars | Done |
+| `internal/notify/notify_test.go` | 9 tests: formatAlertBody (with/without last ping), formatRecoveryBody, formatAlertSMS, formatRecoverySMS, timeSince (seconds/minutes/hours/days), NoopNotifier SendAlert/SendRecovery | Done |
+| `internal/sse/hub_test.go` | 7 tests: NewHub, register/unregister, broadcast to single/multiple clients, slow client skipping (non-blocking), concurrent broadcast safety, no-clients-no-panic | Done |
+
+### Svelte Tests (3 files, 31 tests)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `ui/src/lib/stores/toast.test.ts` | 8 tests: empty initial state, success/error/info toast types, auto-dismiss after 4s (fake timers), manual dismiss, multiple concurrent toasts, unique IDs | Done |
+| `ui/src/lib/stores/checks.test.ts` | 8 tests: initial state, load from API (mocked), error toast on load failure, updateCheck, updateCheckStatus (existing + non-existent), removeCheck, addCheck sorted by name | Done |
+| `ui/src/lib/api.test.ts` | 15 tests: all API methods (listChecks, getCheck, createCheck, updateCheck, deleteCheck, listPings with default/custom params, snoozeCheck, silenceCheck, removeSilence, listAlerts, me), 401 redirect to login, error message extraction, statusText fallback | Done |

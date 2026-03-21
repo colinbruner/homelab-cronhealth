@@ -1,0 +1,82 @@
+# -- Global settings
+namespace: cronhealth
+
+# -- Container images
+api:
+  image:
+    repository: ghcr.io/colinbruner/cronhealth-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+poller:
+  image:
+    repository: ghcr.io/colinbruner/cronhealth-poller
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+ui:
+  image:
+    repository: ghcr.io/colinbruner/cronhealth-ui
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+# -- Ingress
+ingress:
+  enabled: true
+  className: traefik
+  host: cronhealth.internal
+  tls: []
+  annotations: {}
+
+# -- Environment configuration (non-secret)
+config:
+  port: "8080"
+  pollIntervalSeconds: "30"
+  alertCooldownMinutes: "60"
+  awsRegion: "us-east-1"
+
+# -- Secret reference
+# The chart creates an ExternalSecret or you can provide an existing secret name.
+# If existingSecret is set, the chart will use that instead of creating one.
+existingSecret: ""
+
+# -- Secret values (only used if existingSecret is empty)
+# In production, populate via sealed-secrets, external-secrets, or ArgoCD secret plugin.
+secrets:
+  databaseUrl: ""
+  oidcIssuer: ""
+  oidcClientId: ""
+  oidcClientSecret: ""
+  oidcRedirectUrl: ""
+  sessionSecret: ""
+  allowedOidcEmails: ""
+  awsSesFrom: ""
+  awsSnsSmsEnabled: "false"
+  awsAccessKeyId: ""
+  awsSecretAccessKey: ""
