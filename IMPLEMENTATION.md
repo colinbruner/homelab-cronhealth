@@ -109,11 +109,18 @@ Packaged as a Helm chart for ArgoCD deployment. All Kubernetes resources are tem
 
 ---
 
-## Not Started
+### Go Tests (3 files, 19 tests)
 
-### Other
+| File | Description | Status |
+|------|-------------|--------|
+| `internal/config/config_test.go` | 8 tests: env var loading, defaults (port, region, poll interval, cooldown), custom values, OIDC fields, ALLOWED_OIDC_EMAILS parsing (comma-separated, trimming), DATABASE_URL required validation, invalid int env vars | Done |
+| `internal/notify/notify_test.go` | 9 tests: formatAlertBody (with/without last ping), formatRecoveryBody, formatAlertSMS, formatRecoverySMS, timeSince (seconds/minutes/hours/days), NoopNotifier SendAlert/SendRecovery | Done |
+| `internal/sse/hub_test.go` | 7 tests: NewHub, register/unregister, broadcast to single/multiple clients, slow client skipping (non-blocking), concurrent broadcast safety, no-clients-no-panic | Done |
 
-| Item | Description |
-|------|-------------|
-| Go tests | Integration tests against local Supabase (poller state machine, ping endpoint, auth) |
-| Svelte tests | Component tests with vitest + @testing-library/svelte |
+### Svelte Tests (3 files, 31 tests)
+
+| File | Description | Status |
+|------|-------------|--------|
+| `ui/src/lib/stores/toast.test.ts` | 8 tests: empty initial state, success/error/info toast types, auto-dismiss after 4s (fake timers), manual dismiss, multiple concurrent toasts, unique IDs | Done |
+| `ui/src/lib/stores/checks.test.ts` | 8 tests: initial state, load from API (mocked), error toast on load failure, updateCheck, updateCheckStatus (existing + non-existent), removeCheck, addCheck sorted by name | Done |
+| `ui/src/lib/api.test.ts` | 15 tests: all API methods (listChecks, getCheck, createCheck, updateCheck, deleteCheck, listPings with default/custom params, snoozeCheck, silenceCheck, removeSilence, listAlerts, me), 401 redirect to login, error message extraction, statusText fallback | Done |

@@ -50,6 +50,9 @@ jobs:
       - name: Type check
         run: npm run check
 
+      - name: Test
+        run: npx vitest run
+
       - name: Build
         run: npm run build
 
