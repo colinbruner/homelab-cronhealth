@@ -8,8 +8,6 @@
 
   let { date, fallback = 'never' }: Props = $props();
 
-  let display = $state(fallback);
-
   function format(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
     const seconds = Math.floor(diff / 1000);
@@ -21,6 +19,8 @@
     const days = Math.floor(hours / 24);
     return `${days}d ${hours % 24}h ago`;
   }
+
+  let display = $state(date ? format(date) : '');
 
   function tick() {
     if (date) display = format(date);
