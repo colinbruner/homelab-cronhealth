@@ -1,6 +1,6 @@
 # cronhealth — Implementation Log
 
-Last updated: 2026-03-19
+Last updated: 2026-03-20
 
 ---
 
@@ -38,31 +38,36 @@ Last updated: 2026-03-19
 
 ---
 
-## Not Started
-
 ### SvelteKit Frontend (`ui/`)
 
-Per DESIGN.md, the UI is a SvelteKit SPA served by nginx with API calls proxied to avoid CORS.
+| File | Description | Status |
+|------|-------------|--------|
+| `ui/package.json` / `ui/svelte.config.js` / `ui/vite.config.ts` | SvelteKit 2 + Svelte 5, static adapter (SPA mode), Tailwind CSS 4, vitest | Done |
+| `ui/tailwind.config.js` | Design system tokens: dark theme colors, status colors, Inter + JetBrains Mono fonts, sharp border radii | Done |
+| `ui/src/app.html` / `ui/src/app.css` | Shell HTML with Google Fonts preconnect, Tailwind base styles | Done |
+| `ui/src/lib/types.ts` | TypeScript types matching Go JSON models: Check, Ping, Alert, Silence, User, NotificationChannel, request/response types | Done |
+| `ui/src/lib/api.ts` | Typed fetch wrapper for all `/api/*` endpoints. 401 → redirect to `/auth/login`. Methods: listChecks, getCheck, createCheck, updateCheck, deleteCheck, listPings, snoozeCheck, silenceCheck, removeSilence, listAlerts, getAlert, me | Done |
+| `ui/src/lib/sse.ts` | EventSource client connecting to `/api/events`. Listens for `ping_received`, `status_changed`, `alert_fired`. Callback dispatch pattern | Done |
+| `ui/src/lib/stores/auth.ts` | Auth store: loads user via `/api/me`, tracks loading state, 401 handled by api.ts redirect | Done |
+| `ui/src/lib/stores/checks.ts` | Checks store: list with SSE live updates (updateCheckStatus), add/remove/update methods | Done |
+| `ui/src/lib/stores/toast.ts` | Toast store: success/error/info with auto-dismiss (4s), unique IDs | Done |
+| `ui/src/lib/components/*.svelte` | 10 shared components: StatusBadge, TimeAgo, Toast, ToastContainer, Modal, SkeletonCard, SkeletonRow, EmptyState, CheckCard, Nav | Done |
+| `ui/src/routes/+layout.svelte` | Root layout: auth guard, SSE connection, Nav, ToastContainer, mobile bottom padding | Done |
+| `ui/src/routes/+page.svelte` | Dashboard: status summary bar, failing-first layout, mobile accordion for healthy checks, skeleton loading, first-run empty state | Done |
+| `ui/src/routes/checks/[id]/+page.svelte` | Check detail: two-panel desktop layout, ping URL with copy, snooze modal (30m/1h/4h/24h presets), silence/delete actions, ping history, alert log | Done |
+| `ui/src/routes/checks/new/+page.svelte` | New check form: name, period (min), grace (min) | Done |
+| `ui/src/routes/checks/[id]/edit/+page.svelte` | Edit check form: pre-fills from existing check | Done |
+| `ui/src/routes/alerts/+page.svelte` | Alerts feed: active alerts (top, red) with inline snooze, resolved alerts (muted) | Done |
+| `ui/src/routes/settings/+page.svelte` | Settings: user profile display, logout | Done |
+| `ui/static/favicon.svg` | Green checkmark favicon on dark background | Done |
 
-**Screens to build:**
-1. **Dashboard** — status summary bar, failing checks surfaced first, check grid, "+ New Check" CTA
-2. **Check Detail** — name + status badge, last ping + next expected, action bar (snooze/silence/edit/delete), ping history timeline, alert log
-3. **New / Edit Check** — form: name, period, grace period, notification channels
-4. **Alerts Feed** — active alerts (top, red), recently resolved (muted), inline snooze/silence
-5. **Settings** — user profile, notification channel management (email/SMS)
+**Known gaps (require backend work first):**
+- Notification channel CRUD (settings page) — needs `GET/POST /api/channels`, `PUT/DELETE /api/channels/:id`
+- Channel selection in new/edit check forms — `channel_ids` field exists in API but no UI to list available channels
 
-**Infrastructure to build:**
-- SvelteKit project scaffolding (static adapter for SPA mode)
-- Tailwind CSS with design system tokens (colors, fonts, spacing from DESIGN.md)
-- API client module (`lib/api.ts`) — typed fetch wrapper for all `/api/*` endpoints
-- Auth store — session state, redirect to `/auth/login` on 401
-- Checks store — list + SSE real-time updates
-- SSE integration (`EventSource` connecting to `/api/events`)
-- Shared components: StatusBadge, CheckCard, SkeletonCard, Toast, Modal, TimeAgo
-- Empty states: first-run dashboard, no pings yet, no alerts
-- Responsive layouts: mobile bottom nav, collapsed healthy checks, full-width snooze buttons
-- Loading states: skeleton cards/rows (no spinners on page load)
-- Error handling: toast notifications on failed API calls
+---
+
+## Not Started
 
 ### Kubernetes Manifests (`k8s/`)
 
