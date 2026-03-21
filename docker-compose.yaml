@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cronhealth
+      POSTGRES_USER: cronhealth
+      POSTGRES_PASSWORD: cronhealth
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cronhealth -d cronhealth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  cronhealth-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    environment:
+      DATABASE_URL: postgresql://cronhealth:cronhealth@postgres:5432/cronhealth
+      PORT: "8080"
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-secret-change-in-production}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://localhost:8090/auth/callback}
+      ALLOWED_OIDC_EMAILS: ${ALLOWED_OIDC_EMAILS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cronhealth-poller:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: poller
+    environment:
+      DATABASE_URL: postgresql://cronhealth:cronhealth@postgres:5432/cronhealth
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-30}
+      ALERT_COOLDOWN_MINUTES: ${ALERT_COOLDOWN_MINUTES:-60}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_SES_FROM: ${AWS_SES_FROM:-}
+      AWS_SNS_SMS_ENABLED: ${AWS_SNS_SMS_ENABLED:-false}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cronhealth-ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "8090:80"
+    depends_on:
+      - cronhealth-api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
