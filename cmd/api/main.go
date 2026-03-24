@@ -27,10 +27,6 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	if len(cfg.AllowedEmails) == 0 {
-		log.Fatal("ALLOWED_OIDC_EMAILS must not be empty — no one could log in")
-	}
-
 	database, err := db.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
@@ -43,18 +39,27 @@ func main() {
 	go sse.StartListener(ctx, cfg.DatabaseURL, hub)
 
 	// Set up auth
-	authenticator, err := auth.New(
-		ctx,
-		cfg.OIDCIssuer,
-		cfg.OIDCClientID,
-		cfg.OIDCClientSecret,
-		cfg.OIDCRedirectURL,
-		cfg.SessionSecret,
-		cfg.AllowedEmails,
-		database,
-	)
-	if err != nil {
-		log.Fatalf("failed to initialize auth: %v", err)
+	var authenticator *auth.Auth
+	if cfg.DevAuthBypass {
+		log.Println("WARNING: DEV_AUTH_BYPASS=true — authentication is disabled, do not use in production")
+		authenticator = auth.NewDev()
+	} else {
+		if len(cfg.AllowedEmails) == 0 {
+			log.Fatal("ALLOWED_OIDC_EMAILS must not be empty — no one could log in")
+		}
+		authenticator, err = auth.New(
+			ctx,
+			cfg.OIDCIssuer,
+			cfg.OIDCClientID,
+			cfg.OIDCClientSecret,
+			cfg.OIDCRedirectURL,
+			cfg.SessionSecret,
+			cfg.AllowedEmails,
+			database,
+		)
+		if err != nil {
+			log.Fatalf("failed to initialize auth: %v", err)
+		}
 	}
 
 	handlers := &api.Handlers{DB: database, Hub: hub}

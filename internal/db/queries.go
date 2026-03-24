@@ -198,15 +198,21 @@ func (d *DB) RecordPingWithRecovery(ctx context.Context, checkID uuid.UUID, sour
 		recovered = true
 	}
 
-	// Notify SSE clients via pg_notify
-	if _, err := tx.Exec(ctx, `
+	if err := tx.Commit(ctx); err != nil {
+		return false, err
+	}
+
+	// Notify SSE clients after the transaction commits. This must happen outside
+	// the transaction: any error inside a PostgreSQL transaction aborts the whole
+	// transaction, so a pg_notify failure would have silently rolled back the ping.
+	if _, err := d.Pool.Exec(ctx, `
 		SELECT pg_notify('check_events',
-			json_build_object('check_id', $1, 'status', $2, 'event', 'ping_received')::text)`,
+			json_build_object('check_id', $1::text, 'status', $2, 'event', 'ping_received')::text)`,
 		checkID, string(newStatus)); err != nil {
 		// Non-fatal: SSE clients will miss this event
 	}
 
-	return recovered, tx.Commit(ctx)
+	return recovered, nil
 }
 
 func (d *DB) ListPings(ctx context.Context, checkID uuid.UUID, limit, offset int) ([]Ping, error) {

@@ -29,6 +29,7 @@ type UserStore interface {
 
 // Auth holds OIDC provider configuration and session management state.
 type Auth struct {
+	devMode       bool
 	provider      *oidc.Provider
 	oauth2Config  oauth2.Config
 	verifier      *oidc.IDTokenVerifier
@@ -42,6 +43,13 @@ type sessionClaims struct {
 	jwt.RegisteredClaims
 	UserID    string `json:"user_id"`
 	UserEmail string `json:"user_email"`
+}
+
+// NewDev returns an Auth instance that bypasses OIDC for local development.
+// All requests are treated as authenticated with a fixed dev user identity.
+// Never use this in production.
+func NewDev() *Auth {
+	return &Auth{devMode: true}
 }
 
 // New discovers the OIDC provider and returns a configured Auth instance.
@@ -73,7 +81,12 @@ func New(ctx context.Context, issuer, clientID, clientSecret, redirectURL, sessi
 
 // LoginHandler generates a random state, stores it in a secure cookie, and
 // redirects the user to the OIDC authorization URL.
+// In dev bypass mode it redirects directly to / without OIDC.
 func (a *Auth) LoginHandler(c *gin.Context) {
+	if a.devMode {
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
 	state, err := randomState()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate state"})
@@ -90,7 +103,12 @@ func (a *Auth) LoginHandler(c *gin.Context) {
 // authorization code for tokens, verifies the ID token, checks the email
 // against the allow-list, upserts the user, and issues a signed JWT session
 // cookie.
+// In dev bypass mode it is unreachable (login never redirects to the provider).
 func (a *Auth) CallbackHandler(c *gin.Context) {
+	if a.devMode {
+		c.Redirect(http.StatusFound, "/")
+		return
+	}
 	// Validate state cookie
 	storedState, err := c.Cookie(stateCookieName)
 	if err != nil {
@@ -208,8 +226,15 @@ func (a *Auth) MeHandler(c *gin.Context) {
 // Middleware returns a gin middleware that validates the session cookie JWT and
 // sets user_id and user_email in the gin context. Returns 401 if the cookie is
 // missing or invalid.
+// In dev bypass mode all requests are passed through as a fixed dev user.
 func (a *Auth) Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if a.devMode {
+			c.Set("user_id", "dev-user")
+			c.Set("user_email", "dev@localhost")
+			c.Next()
+			return
+		}
 		cookie, err := c.Cookie(sessionCookieName)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})

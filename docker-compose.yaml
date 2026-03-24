@@ -24,12 +24,18 @@ services:
     environment:
       DATABASE_URL: postgresql://cronhealth:cronhealth@postgres:5432/cronhealth
       PORT: "8080"
-      SESSION_SECRET: ${SESSION_SECRET:-local-dev-secret-change-in-production}
-      OIDC_ISSUER: ${OIDC_ISSUER:-}
-      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
-      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
-      OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL:-http://localhost:8090/auth/callback}
-      ALLOWED_OIDC_EMAILS: ${ALLOWED_OIDC_EMAILS:-}
+      DEV_AUTH_BYPASS: ${DEV_AUTH_BYPASS}
+      SESSION_SECRET: ${SESSION_SECRET}
+      OIDC_ISSUER: ${OIDC_ISSUER}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL}
+      ALLOWED_OIDC_EMAILS: ${ALLOWED_OIDC_EMAILS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     depends_on:
       postgres:
         condition: service_healthy
@@ -42,13 +48,13 @@ services:
       target: poller
     environment:
       DATABASE_URL: postgresql://cronhealth:cronhealth@postgres:5432/cronhealth
-      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS:-30}
-      ALERT_COOLDOWN_MINUTES: ${ALERT_COOLDOWN_MINUTES:-60}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
-      AWS_SES_FROM: ${AWS_SES_FROM:-}
-      AWS_SNS_SMS_ENABLED: ${AWS_SNS_SMS_ENABLED:-false}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS}
+      ALERT_COOLDOWN_MINUTES: ${ALERT_COOLDOWN_MINUTES}
+      AWS_REGION: ${AWS_REGION}
+      AWS_SES_FROM: ${AWS_SES_FROM}
+      AWS_SNS_SMS_ENABLED: ${AWS_SNS_SMS_ENABLED}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,7 +67,8 @@ services:
     ports:
       - "8090:80"
     depends_on:
-      - cronhealth-api
+      cronhealth-api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

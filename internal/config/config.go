@@ -10,12 +10,14 @@ import (
 type Config struct {
 	DatabaseURL string
 
-	OIDCIssuer      string
-	OIDCClientID    string
+	DevAuthBypass bool
+
+	OIDCIssuer       string
+	OIDCClientID     string
 	OIDCClientSecret string
-	OIDCRedirectURL string
-	SessionSecret   string
-	AllowedEmails   []string
+	OIDCRedirectURL  string
+	SessionSecret    string
+	AllowedEmails    []string
 
 	AWSRegion     string
 	SESFrom       string
@@ -30,6 +32,7 @@ type Config struct {
 func Load() (*Config, error) {
 	c := &Config{
 		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		DevAuthBypass:    os.Getenv("DEV_AUTH_BYPASS") == "true",
 		OIDCIssuer:       os.Getenv("OIDC_ISSUER"),
 		OIDCClientID:     os.Getenv("OIDC_CLIENT_ID"),
 		OIDCClientSecret: os.Getenv("OIDC_CLIENT_SECRET"),
