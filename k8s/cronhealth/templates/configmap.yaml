@@ -9,3 +9,4 @@ data:
   POLL_INTERVAL_SECONDS: {{ .Values.config.pollIntervalSeconds | quote }}
   ALERT_COOLDOWN_MINUTES: {{ .Values.config.alertCooldownMinutes | quote }}
   AWS_REGION: {{ .Values.config.awsRegion | quote }}
+  AWS_SNS_SMS_ENABLED: {{ .Values.config.awsSnsSmsEnabled | quote }}

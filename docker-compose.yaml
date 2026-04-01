@@ -30,7 +30,6 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URL: ${OIDC_REDIRECT_URL}
-      ALLOWED_OIDC_EMAILS: ${ALLOWED_OIDC_EMAILS}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
       interval: 5s

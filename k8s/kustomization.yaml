@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  - name: cronhealth
+    releaseName: cronhealth
+    namespace: cronhealth
+    chart: ./cronhealth
+    valuesFile: ./cronhealth/values.yaml
+
+resources:
+  - secrets.yaml

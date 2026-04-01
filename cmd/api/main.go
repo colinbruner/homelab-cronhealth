@@ -44,9 +44,6 @@ func main() {
 		log.Println("WARNING: DEV_AUTH_BYPASS=true — authentication is disabled, do not use in production")
 		authenticator = auth.NewDev()
 	} else {
-		if len(cfg.AllowedEmails) == 0 {
-			log.Fatal("ALLOWED_OIDC_EMAILS must not be empty — no one could log in")
-		}
 		authenticator, err = auth.New(
 			ctx,
 			cfg.OIDCIssuer,
@@ -54,7 +51,6 @@ func main() {
 			cfg.OIDCClientSecret,
 			cfg.OIDCRedirectURL,
 			cfg.SessionSecret,
-			cfg.AllowedEmails,
 			database,
 		)
 		if err != nil {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type Config struct {
@@ -17,7 +16,6 @@ type Config struct {
 	OIDCClientSecret string
 	OIDCRedirectURL  string
 	SessionSecret    string
-	AllowedEmails    []string
 
 	AWSRegion     string
 	SESFrom       string
@@ -41,14 +39,6 @@ func Load() (*Config, error) {
 		AWSRegion:        getEnvDefault("AWS_REGION", "us-east-1"),
 		SESFrom:          os.Getenv("AWS_SES_FROM"),
 		Port:             getEnvDefault("PORT", "8080"),
-	}
-
-	if emails := os.Getenv("ALLOWED_OIDC_EMAILS"); emails != "" {
-		for _, e := range strings.Split(emails, ",") {
-			if trimmed := strings.TrimSpace(e); trimmed != "" {
-				c.AllowedEmails = append(c.AllowedEmails, trimmed)
-			}
-		}
 	}
 
 	c.SNSEnabled = os.Getenv("AWS_SNS_SMS_ENABLED") == "true"

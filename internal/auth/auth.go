@@ -34,7 +34,6 @@ type Auth struct {
 	oauth2Config  oauth2.Config
 	verifier      *oidc.IDTokenVerifier
 	sessionSecret []byte
-	allowedEmails []string
 	db            UserStore
 }
 
@@ -53,7 +52,7 @@ func NewDev() *Auth {
 }
 
 // New discovers the OIDC provider and returns a configured Auth instance.
-func New(ctx context.Context, issuer, clientID, clientSecret, redirectURL, sessionSecret string, allowedEmails []string, store UserStore) (*Auth, error) {
+func New(ctx context.Context, issuer, clientID, clientSecret, redirectURL, sessionSecret string, store UserStore) (*Auth, error) {
 	provider, err := oidc.NewProvider(ctx, issuer)
 	if err != nil {
 		return nil, fmt.Errorf("discovering OIDC provider: %w", err)
@@ -74,7 +73,6 @@ func New(ctx context.Context, issuer, clientID, clientSecret, redirectURL, sessi
 		oauth2Config:  oauth2Config,
 		verifier:      verifier,
 		sessionSecret: []byte(sessionSecret),
-		allowedEmails: allowedEmails,
 		db:            store,
 	}, nil
 }
@@ -158,21 +156,6 @@ func (a *Auth) CallbackHandler(c *gin.Context) {
 	if claims.Email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "email not provided by identity provider"})
 		return
-	}
-
-	// Check against allowed emails (if the list is non-empty)
-	if len(a.allowedEmails) > 0 {
-		allowed := false
-		for _, e := range a.allowedEmails {
-			if e == claims.Email {
-				allowed = true
-				break
-			}
-		}
-		if !allowed {
-			c.JSON(http.StatusForbidden, gin.H{"error": "email not authorized"})
-			return
-		}
 	}
 
 	// Upsert user in database

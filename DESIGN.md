@@ -132,7 +132,6 @@ SESSION_SECRET=...
 AWS_REGION=us-east-1
 AWS_SES_FROM=alerts@yourdomain.com
 AWS_SNS_ENABLED=true
-ALLOWED_OIDC_EMAILS=you@example.com,other@example.com
 ```
 
 ### 2. cronhealth-poller (Go ticker)
@@ -679,7 +678,6 @@ Pocket-ID redirects back to:
          │
          ▼
 cronhealth-api exchanges code for tokens, extracts email
-Checks email in ALLOWED_OIDC_EMAILS list
 Creates/updates user record in Supabase
 Sets signed session cookie (JWT, 24h expiry)
 Redirects to UI dashboard

@@ -114,7 +114,6 @@ OIDC_ISSUER=https://your-provider.example.com
 OIDC_CLIENT_ID=your-client-id
 OIDC_CLIENT_SECRET=your-client-secret
 OIDC_REDIRECT_URL=http://localhost:8090/auth/callback
-ALLOWED_OIDC_EMAILS=you@example.com
 SESSION_SECRET=<output of: openssl rand -hex 32>
 ```
 
@@ -131,7 +130,6 @@ All configuration is via environment variables. See [`.env.example`](.env.exampl
 | `OIDC_CLIENT_ID` | api | — | OAuth2 client ID |
 | `OIDC_CLIENT_SECRET` | api | — | OAuth2 client secret |
 | `OIDC_REDIRECT_URL` | api | — | Callback URL registered with the OIDC provider |
-| `ALLOWED_OIDC_EMAILS` | api | — | Comma-separated email allowlist |
 | `PORT` | api | `8080` | HTTP listen port |
 | `POLL_INTERVAL_SECONDS` | poller | `30` | How often the poller checks for missed jobs |
 | `ALERT_COOLDOWN_MINUTES` | poller | `60` | Minimum time between repeat alerts for the same check |

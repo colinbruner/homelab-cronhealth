@@ -13,7 +13,7 @@ Last updated: 2026-03-21
 | `go.mod` / `go.sum` | Module `github.com/colinbruner/cronhealth`. Deps: gin, pgx/v5, aws-sdk-go-v2 (ses, sns, config), go-oidc/v3, oauth2, golang-jwt/jwt/v5, uuid | Done |
 | `cmd/api/main.go` | API server entrypoint. Wires config → db → sse hub → sse listener → auth → handlers → gin router. Graceful shutdown on SIGINT/SIGTERM. Routes: `/health`, `/ready`, `/ping/:slug` (unauth), `/auth/*` (unauth), `/api/*` (auth middleware) | Done |
 | `cmd/poller/main.go` | Poller entrypoint. Wires config → db → notifier (AWS or noop) → poller. Graceful shutdown | Done |
-| `internal/config/config.go` | Loads all env vars into `Config` struct. Validates `DATABASE_URL` required. Parses `ALLOWED_OIDC_EMAILS` comma-separated. Defaults: poll interval 30s, cooldown 60m, port 8080 | Done |
+| `internal/config/config.go` | Loads all env vars into `Config` struct. Validates `DATABASE_URL` required. Defaults: poll interval 30s, cooldown 60m, port 8080 | Done |
 | `internal/db/models.go` | All data models: `Check` (with status constants: new/up/down/alerting/silenced), `Ping`, `Alert`, `Silence`, `User`, `NotificationChannel`, `CheckWithChannels`. UUID + time.Time fields with JSON tags | Done |
 | `internal/db/db.go` | Database connection management. `New()` creates pgxpool (min 2, max 10 conns). `NewListenConn()` creates dedicated non-pooled pgx.Conn for LISTEN/NOTIFY | Done |
 | `internal/db/queries.go` | All SQL queries (~350 lines). `ListChecks`, `GetCheck`, `GetCheckBySlug`, `CreateCheck`, `UpdateCheck`, `DeleteCheck`, `RecordPingWithRecovery` (transactional: insert ping + update status + resolve alert + pg_notify), `ListPings`, `ListAlerts`, `GetAlert`, `CreateSilence`, `DeleteSilence`, `UpsertUser`, `GetChannelsForCheck`, `SetCheckChannels`, `GetMissedChecks`, `TransitionToAlerting`, `ReAlert` | Done |
@@ -113,7 +113,7 @@ Packaged as a Helm chart for ArgoCD deployment. All Kubernetes resources are tem
 
 | File | Description | Status |
 |------|-------------|--------|
-| `internal/config/config_test.go` | 8 tests: env var loading, defaults (port, region, poll interval, cooldown), custom values, OIDC fields, ALLOWED_OIDC_EMAILS parsing (comma-separated, trimming), DATABASE_URL required validation, invalid int env vars | Done |
+| `internal/config/config_test.go` | 6 tests: env var loading, defaults (port, region, poll interval, cooldown), custom values, OIDC fields, DATABASE_URL required validation, invalid int env vars | Done |
 | `internal/notify/notify_test.go` | 9 tests: formatAlertBody (with/without last ping), formatRecoveryBody, formatAlertSMS, formatRecoverySMS, timeSince (seconds/minutes/hours/days), NoopNotifier SendAlert/SendRecovery | Done |
 | `internal/sse/hub_test.go` | 7 tests: NewHub, register/unregister, broadcast to single/multiple clients, slow client skipping (non-blocking), concurrent broadcast safety, no-clients-no-panic | Done |
 

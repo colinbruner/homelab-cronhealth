@@ -8,7 +8,7 @@ import (
 func clearEnv() {
 	for _, key := range []string{
 		"DATABASE_URL", "OIDC_ISSUER", "OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET",
-		"OIDC_REDIRECT_URL", "SESSION_SECRET", "ALLOWED_OIDC_EMAILS",
+		"OIDC_REDIRECT_URL", "SESSION_SECRET",
 		"AWS_REGION", "AWS_SES_FROM", "AWS_SNS_SMS_ENABLED",
 		"POLL_INTERVAL_SECONDS", "ALERT_COOLDOWN_MINUTES", "PORT",
 	} {
@@ -78,41 +78,6 @@ func TestLoad_CustomValues(t *testing.T) {
 	}
 	if !cfg.SNSEnabled {
 		t.Error("SNSEnabled should be true")
-	}
-}
-
-func TestLoad_AllowedEmails(t *testing.T) {
-	clearEnv()
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-	os.Setenv("ALLOWED_OIDC_EMAILS", "alice@example.com, bob@example.com , charlie@example.com")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	want := []string{"alice@example.com", "bob@example.com", "charlie@example.com"}
-	if len(cfg.AllowedEmails) != len(want) {
-		t.Fatalf("AllowedEmails len = %d, want %d", len(cfg.AllowedEmails), len(want))
-	}
-	for i, email := range want {
-		if cfg.AllowedEmails[i] != email {
-			t.Errorf("AllowedEmails[%d] = %q, want %q", i, cfg.AllowedEmails[i], email)
-		}
-	}
-}
-
-func TestLoad_EmptyAllowedEmails(t *testing.T) {
-	clearEnv()
-	os.Setenv("DATABASE_URL", "postgres://localhost/test")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if len(cfg.AllowedEmails) != 0 {
-		t.Errorf("AllowedEmails should be empty, got %v", cfg.AllowedEmails)
 	}
 }
 

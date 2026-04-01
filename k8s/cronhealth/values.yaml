@@ -60,23 +60,8 @@ config:
   pollIntervalSeconds: "30"
   alertCooldownMinutes: "60"
   awsRegion: "us-east-1"
-
-# -- Secret reference
-# The chart creates an ExternalSecret or you can provide an existing secret name.
-# If existingSecret is set, the chart will use that instead of creating one.
-existingSecret: ""
-
-# -- Secret values (only used if existingSecret is empty)
-# In production, populate via sealed-secrets, external-secrets, or ArgoCD secret plugin.
-secrets:
-  databaseUrl: ""
-  oidcIssuer: ""
-  oidcClientId: ""
-  oidcClientSecret: ""
-  oidcRedirectUrl: ""
-  sessionSecret: ""
-  allowedOidcEmails: ""
-  awsSesFrom: ""
   awsSnsSmsEnabled: "false"
-  awsAccessKeyId: ""
-  awsSecretAccessKey: ""
+
+# -- Name of the existing Secret to use for all sensitive env vars.
+# Created by the 1Password operator from k8s/secrets.yaml (OnePasswordItem).
+existingSecret: "cronhealth-secrets"

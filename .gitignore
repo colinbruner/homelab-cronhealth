@@ -19,6 +19,9 @@ ui/.svelte-kit/
 *.swp
 *.swo
 
+# Supabase CLI
+supabase/.temp/
+
 # OS
 .DS_Store
 Thumbs.db
